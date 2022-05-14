@@ -138,10 +138,7 @@ if __name__ == "__main__":
     # TODO:
     # Ler o ficheiro de input de sys.argv[1],
     board = Board.parse_instance_from_stdin()
-    print(board.adjacent_vertical_numbers(3, 3))
-    print(board.adjacent_horizontal_numbers(3, 3))
-    print(board.adjacent_vertical_numbers(1, 1))
-    print(board.adjacent_horizontal_numbers(1, 1))
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
+    print(board)
