@@ -2,11 +2,11 @@
 # Devem alterar as classes e funções neste ficheiro de acordo com as instruções do enunciado.
 # Além das funções e classes já definidas, podem acrescentar outras que considerem pertinentes.
 
-# Grupo 00:
+# Grupo 01:
 # 00000 Nome1
 # 00000 Nome2
 
-import sys
+import sys, numpy
 from search import (
     Problem,
     Node,
@@ -35,22 +35,45 @@ class TakuzuState:
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
 
+    def __init__(self, matrix):
+        self.repr = numpy.matrix(matrix, int)
+
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
         # TODO
-        pass
+        return self.repr.item(row, col)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        # TODO
-        pass
+        a = None
+        b = None
+        try:
+            a = self.repr.item(row + 1, col)
+        except:
+            pass
+        try:
+            b = self.repr.item(row - 1, col)
+        except:
+            pass
+
+        return a, b
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        # TODO
-        pass
+        a = None
+        b = None
+        try:
+            a = self.repr.item(row, col - 1)
+        except:
+            pass
+        try:
+            b = self.repr.item(row, col + 1)
+        except:
+            pass
+
+        return a, b
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -63,10 +86,17 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
-        # TODO
-        pass
+        rows = int(sys.stdin.readline())
+        matrix = ''
+        for i in range(rows - 1):
+            matrix += sys.stdin.readline().strip() + ';'
+        matrix += sys.stdin.readline().strip()
+
+        return Board(matrix)
 
     # TODO: outros metodos da classe
+    def __repr__(self):
+        return str(self.repr).replace('\n ', '\n').replace('[', '').replace(']', '')
 
 
 class Takuzu(Problem):
@@ -107,7 +137,11 @@ class Takuzu(Problem):
 if __name__ == "__main__":
     # TODO:
     # Ler o ficheiro de input de sys.argv[1],
+    board = Board.parse_instance_from_stdin()
+    print(board.adjacent_vertical_numbers(3, 3))
+    print(board.adjacent_horizontal_numbers(3, 3))
+    print(board.adjacent_vertical_numbers(1, 1))
+    print(board.adjacent_horizontal_numbers(1, 1))
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
-    pass
