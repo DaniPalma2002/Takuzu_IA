@@ -104,6 +104,15 @@ class Board:
 
         return True
 
+    def possible_move(self, move: tuple):
+        """Returns True if it is a possible move and False otherwise"""
+        #TODO
+        pass
+
+    def possible_moves(self):
+        """Returns a list of possible moves, every possible move is like (row, col, number)"""
+        #TODO
+        pass
 
     def __copy__(self):
         return Board(self.repr)
@@ -143,8 +152,8 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        pass
+        return state.board.possible_moves()
+
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
