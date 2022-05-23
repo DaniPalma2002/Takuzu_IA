@@ -26,6 +26,15 @@ class TakuzuState:
         self.id = TakuzuState.state_id
         TakuzuState.state_id += 1
 
+    def get_board(self):
+        return self.board
+
+    def get_id(self):
+        return self.id
+
+    def set_board(self, board):
+        self.board = board
+
     def __lt__(self, other):
         return self.id < other.id
 
@@ -42,6 +51,10 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         # TODO
         return self.repr.item(row, col)
+
+    def set_number(self, row: int, col: int, n: int):
+        """Makes a play"""
+        self.repr.itemset((row, col), n)
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -75,6 +88,26 @@ class Board:
 
         return a, b
 
+    def size(self):
+        """returns the size of the board nxn (returning n)"""
+        return int(self.repr.size ** 0.5)
+
+    def empty_square(self, row: int, col: int):
+        return self.get_number(row, col) == 2
+
+    def game_over(self):
+        n = self.size()
+        for row in range(n):
+            for col in range(n):
+                if self.empty_square(row, col):
+                    return False
+
+        return True
+
+
+    def __copy__(self):
+        return Board(self.repr)
+
     @staticmethod
     def parse_instance_from_stdin():
         """Lê o test do standard input (stdin) que é passado como argumento
@@ -95,6 +128,8 @@ class Board:
         return Board(matrix)
 
     # TODO: outros metodos da classe
+
+
     def __repr__(self):
         return str(self.repr).replace('\n ', '\n').replace('[', '').replace(']', '')
 
@@ -102,8 +137,8 @@ class Board:
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        # TODO
-        pass
+        super().__init__(board)
+
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -116,15 +151,16 @@ class Takuzu(Problem):
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        # TODO
-        pass
+        new_board = state.get_board().__copy__()
+        new_board.set_number(action[0], action[1], action[2])
+        return TakuzuState(new_board)
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        # TODO
-        pass
+        return state.get_board().game_over()
+
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -135,10 +171,24 @@ class Takuzu(Problem):
 
 
 if __name__ == "__main__":
-    # TODO:
-    # Ler o ficheiro de input de sys.argv[1],
+    # Ler tabuleiro do ficheiro 'i1.txt' (Figura 1):
+    # $ python3 takuzu < i1.txt
     board = Board.parse_instance_from_stdin()
-    # Usar uma técnica de procura para resolver a instância,
-    # Retirar a solução a partir do nó resultante,
-    # Imprimir para o standard output no formato indicado.
-    print(board)
+    # Criar uma instância de Takuzu:
+    problem = Takuzu(board)
+    # Criar um estado com a configuração inicial:
+    s0 = TakuzuState(board)
+    print("Initial:\n", s0.board, sep="")
+    # Aplicar as ações que resolvem a instância
+    s1 = problem.result(s0, (0, 0, 0))
+    s2 = problem.result(s1, (0, 2, 1))
+    s3 = problem.result(s2, (1, 0, 1))
+    s4 = problem.result(s3, (1, 1, 0))
+    s5 = problem.result(s4, (1, 3, 1))
+    s6 = problem.result(s5, (2, 0, 0))
+    s7 = problem.result(s6, (2, 2, 1))
+    s8 = problem.result(s7, (2, 3, 1))
+    s9 = problem.result(s8, (3, 2, 0))
+    # Verificar se foi atingida a solução
+    print("Is goal?", problem.goal_test(s9))
+    print("Solution:\n", s9.board, sep="")
