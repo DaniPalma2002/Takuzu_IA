@@ -43,18 +43,17 @@ class TakuzuState:
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-
-    def __init__(self, matrix):
-        self.repr = numpy.matrix(matrix, int)
+    def __init__(self, board):
+        self.board = numpy.matrix(board, int)
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
         # TODO
-        return self.repr.item(row, col)
+        return self.board.item(row, col)
 
     def set_number(self, row: int, col: int, n: int):
         """Makes a play"""
-        self.repr.itemset((row, col), n)
+        self.board.itemset((row, col), n)
 
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
@@ -63,11 +62,11 @@ class Board:
         a = None
         b = None
         try:
-            a = self.repr.item(row + 1, col)
+            a = self.board.item(row + 1, col)
         except:
             pass
         try:
-            b = self.repr.item(row - 1, col)
+            b = self.board.item(row - 1, col)
         except:
             pass
 
@@ -79,11 +78,11 @@ class Board:
         a = None
         b = None
         try:
-            a = self.repr.item(row, col - 1)
+            a = self.board.item(row, col - 1)
         except:
             pass
         try:
-            b = self.repr.item(row, col + 1)
+            b = self.board.item(row, col + 1)
         except:
             pass
 
@@ -91,22 +90,17 @@ class Board:
 
     def size(self):
         """returns the size of the board nxn (returning n)"""
-        return int(self.repr.size ** 0.5)
+        return int(self.board.size ** 0.5)
 
     def empty_square(self, row: int, col: int):
         return self.get_number(row, col) == 2
 
     def game_over(self):
-        n = self.size()
-        for row in range(n):
-            for col in range(n):
-                if self.empty_square(row, col):
-                    return False
+        return 2 not in self.board
 
-        return True
 
     def all_rows_and_columns_are_different(self):
-        return numpy.unique(self.repr, axis=0) == numpy.unique(self.repr, axis=1) == self.repr
+        return not(numpy.unique(self.board, axis=0) == numpy.unique(self.board, axis=1) == self.board)
 
     def there_are_no_more_than_two_adjacent_numbers(self):
         size = self.size()
@@ -130,9 +124,9 @@ class Board:
         """Returns True if it is a possible move and False otherwise"""
 
         saved_number = self.get_number(row, col)
-        self.repr.set_number(row, col, n)
+        self.board.set_number(row, col, n)
         res = self.solvable()
-        self.repr.set_number(row, col, saved_number)
+        self.board.set_number(row, col, saved_number)
 
         return res
 
@@ -151,7 +145,7 @@ class Board:
 
 
     def __copy__(self):
-        return Board(self.repr.copy())
+        return Board(self.board.copy())
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -176,7 +170,7 @@ class Board:
 
 
     def __repr__(self):
-        return str(self.repr).replace('\n ', '\n').replace('[', '').replace(']', '')
+        return str(self.board).replace('\n ', '\n').replace('[', '').replace(']', '')
 
 
 class Takuzu(Problem):
