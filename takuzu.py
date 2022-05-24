@@ -56,6 +56,7 @@ class Board:
         """Makes a play"""
         self.repr.itemset((row, col), n)
 
+
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
@@ -104,25 +105,53 @@ class Board:
 
         return True
 
+    def all_rows_and_columns_are_different(self):
+        return numpy.unique(self.repr, axis=0) == numpy.unique(self.repr, axis=1) == self.repr
+
+    def there_are_no_more_than_two_adjacent_numbers(self):
+        size = self.size()
+        for row in range(size):
+            for col in range(size):
+                number = self.get_number(row, col)
+                if number != 2 and \
+                        (number == self.adjacent_vertical_numbers(row, col) and
+                         self.adjacent_horizontal_numbers(row, col) == number):
+                    return False
+        return True
+
+
+
     def solvable(self):
         """Returns True if it is a solvable board and False otherwise"""
         #TODO
         pass
 
-    def possible_move(self, move: tuple):
+    def possible_move(self, row: int, col: int, n: int):
         """Returns True if it is a possible move and False otherwise"""
-        #TODO
-        pass
+
+        saved_number = self.get_number(row, col)
+        self.repr.set_number(row, col, n)
+        res = self.solvable()
+        self.repr.set_number(row, col, saved_number)
+
+        return res
 
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
-        #TODO
-        pass
-
+        n = self.size()
+        res = []
+        for row in range(n):
+            for col in range(n):
+                if self.empty_square(row, col):
+                    if self.possible_move(row, col, 0):
+                        res.append((row, col, 0))
+                    if self.possible_move(row, col, 1):
+                        res.append((row, col, 1))
+        return res
 
 
     def __copy__(self):
-        return Board(self.repr)
+        return Board(self.repr.copy())
 
     @staticmethod
     def parse_instance_from_stdin():
