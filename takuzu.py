@@ -26,15 +26,6 @@ class TakuzuState:
         self.id = TakuzuState.state_id
         TakuzuState.state_id += 1
 
-    def get_board(self):
-        return self.board
-
-    def get_id(self):
-        return self.id
-
-    def set_board(self, board):
-        self.board = board
-
     def __lt__(self, other):
         return self.id < other.id
 
@@ -45,16 +36,20 @@ class Board:
     """Representação interna de um tabuleiro de Takuzu."""
     def __init__(self, board):
         self.board = numpy.matrix(board, int)
+        self.history = []
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
-        # TODO
         return self.board.item(row, col)
 
     def set_number(self, row: int, col: int, n: int):
-        """Makes a play"""
+        """Altera uma posicao do tabuleiro sem adiciona-la ao historico"""
         self.board.itemset((row, col), n)
 
+    def set_number_recorded(self, row: int, col: int, n: int):
+        """Altera uma posicao do tabuleiro adicionando-a ao historico"""
+        self.board.itemset((row, col), n)
+        self.history.append((row, col, n))
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -92,12 +87,8 @@ class Board:
         """returns the size of the board nxn (returning n)"""
         return int(self.board.size ** 0.5)
 
-    def empty_square(self, row: int, col: int):
-        return self.get_number(row, col) == 2
-
     def game_over(self):
         return 2 not in self.board
-
 
     def all_rows_and_columns_are_different(self):
         return not(numpy.unique(self.board, axis=0) == numpy.unique(self.board, axis=1) == self.board)
@@ -113,12 +104,6 @@ class Board:
                     return False
         return True
 
-
-
-    def solvable(self):
-        """Returns True if it is a solvable board and False otherwise"""
-        #TODO
-        pass
 
     def possible_move(self, row: int, col: int, n: int):
         """Returns True if it is a possible move and False otherwise"""
@@ -144,8 +129,7 @@ class Board:
         return res
 
 
-    def __copy__(self):
-        return Board(self.board.copy())
+
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -168,37 +152,41 @@ class Board:
 
     # TODO: outros metodos da classe
 
+    def __copy__(self):
+        return Board(self.board.copy())
 
     def __repr__(self):
-        return str(self.board).replace('\n ', '\n').replace('[', '').replace(']', '')
+        return str(self.board).replace('\n ', '\n').replace('[', '').replace(']', '').replace(' ', '\t')
 
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        super().__init__(board)
+        super().__init__(TakuzuState(board))
 
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        return state.board.possible_moves()
-
+        return []
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        new_board = state.get_board().__copy__()
-        new_board.set_number(action[0], action[1], action[2])
-        return TakuzuState(new_board)
+        s = TakuzuState(state.board.__copy__())
+        s.board.set_number(action[0], action[1], action[2])
+        return s
+
+
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        return state.get_board().game_over()
+        print(state.board)
+        return state.board.game_over()
 
 
     def h(self, node: Node):
@@ -215,19 +203,9 @@ if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
     # Criar uma instância de Takuzu:
     problem = Takuzu(board)
-    # Criar um estado com a configuração inicial:
-    s0 = TakuzuState(board)
-    print("Initial:\n", s0.board, sep="")
-    # Aplicar as ações que resolvem a instância
-    s1 = problem.result(s0, (0, 0, 0))
-    s2 = problem.result(s1, (0, 2, 1))
-    s3 = problem.result(s2, (1, 0, 1))
-    s4 = problem.result(s3, (1, 1, 0))
-    s5 = problem.result(s4, (1, 3, 1))
-    s6 = problem.result(s5, (2, 0, 0))
-    s7 = problem.result(s6, (2, 2, 1))
-    s8 = problem.result(s7, (2, 3, 1))
-    s9 = problem.result(s8, (3, 2, 0))
+    # Obter o nó solução usando a procura em profundidade:
+    goal_node = depth_first_tree_search(problem)
     # Verificar se foi atingida a solução
-    print("Is goal?", problem.goal_test(s9))
-    print("Solution:\n", s9.board, sep="")
+    print("Is goal?", problem.goal_test(goal_node.state))
+    print("Solution:\n", goal_node.state.board, sep="")
+
