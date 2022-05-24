@@ -42,6 +42,10 @@ class Board:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board.item(row, col)
 
+    def make_history(self):
+        for action in self.history:
+            self.set_number(action[0], action[1], action[2])
+
     def set_number(self, row: int, col: int, n: int):
         """Altera uma posicao do tabuleiro sem adiciona-la ao historico"""
         self.board.itemset((row, col), n)
@@ -153,59 +157,47 @@ class Board:
     # TODO: outros metodos da classe
 
     def __copy__(self):
-        return Board(self.board.copy())
+        new_board = Board('')
+        new_board.board = self.board
+        new_board.history = self.history
+        return new_board
 
     def __repr__(self):
-        return str(self.board).replace('\n ', '\n').replace('[', '').replace(']', '').replace(' ', '\t')
+        b = self.board.copy()
+        self.make_history()
+        bo = self.board.copy()
+        self.board = b
+        return str(bo).replace('\n ', '\n').replace('[', '').replace(']', '').replace(' ', '\t')
 
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        super().__init__(TakuzuState(board))
-
+        super().__init__(board)
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        size = state.board.size()
-        res = []
-        for row in range(size):
-            for col in range(size):
-                if state.board.get_number(row, col) == 2:
-                    state.board.set_number(row, col, 0)
-                    if state.board.there_are_no_more_than_two_adjacent_numbers():
-                        res.append((row, col, 0))
-                        state.board.set_number(row, col, 2)
-
-                    state.board.set_number(row, col, 1)
-                    if state.board.there_are_no_more_than_two_adjacent_numbers():
-                        res.append((row, col, 1))
-                        state.board.set_number(row, col, 2)
-        print(res)
-        print(state.board)
-        return res
-
+        state.board.possible_moves()
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        s = TakuzuState(state.board.__copy__())
-        s.board.set_number(action[0], action[1], action[2])
-        return s
-
-
+        new_state = TakuzuState(state.board.copy())
+        new_state.make_move(action[0], action[1], action[2])
+        return new_state
 
     def goal_test(self, state: TakuzuState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        return state.board.game_over() and \
-               state.board.all_rows_and_columns_are_different() and \
-               state.board.there_are_no_more_than_two_adjacent_numbers()
-
+        return state.board.all_positions_are_filled() and \
+                state.board.all_rows_are_different() and \
+                state.board.all_columns_are_different() and \
+                state.board.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine() and \
+                state.board.there_are_no_more_than_two_adjacent_numbers()
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -216,7 +208,6 @@ class Takuzu(Problem):
 
 
 if __name__ == "__main__":
-    # Ler tabuleiro do ficheiro 'i1.txt' (Figura 1):
     # $ python3 takuzu < i1.txt
     board = Board.parse_instance_from_stdin()
     # Criar uma instância de Takuzu:
@@ -226,4 +217,6 @@ if __name__ == "__main__":
     # Verificar se foi atingida a solução
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
+    
+
 
