@@ -104,6 +104,11 @@ class Board:
 
         return True
 
+    def solvable(self):
+        """Returns True if it is a solvable board and False otherwise"""
+        #TODO
+        pass
+
     def possible_move(self, move: tuple):
         """Returns True if it is a possible move and False otherwise"""
         #TODO
@@ -113,6 +118,8 @@ class Board:
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         #TODO
         pass
+
+
 
     def __copy__(self):
         return Board(self.repr)
