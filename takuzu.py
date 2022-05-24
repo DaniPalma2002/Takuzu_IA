@@ -91,7 +91,7 @@ class Board:
         return 2 not in self.board
 
     def all_rows_and_columns_are_different(self):
-        return numpy.unique(self.board, axis=0).all() == numpy.unique(self.board, axis=1).all() == self.board.all()
+        return numpy.unique(self.board, axis=0).all() != numpy.unique(self.board, axis=1).all() != self.board.all()
 
     def there_are_no_more_than_two_adjacent_numbers(self):
         size = self.size()
@@ -99,8 +99,8 @@ class Board:
             for col in range(size):
                 number = self.get_number(row, col)
                 if number != 2 and \
-                        (number == self.adjacent_vertical_numbers(row, col) and
-                         self.adjacent_horizontal_numbers(row, col) == number):
+                        (self.adjacent_vertical_numbers(row, col).count(number) == 2 or
+                         self.adjacent_horizontal_numbers(row, col).count(number) == 2):
                     return False
         return True
 
@@ -174,16 +174,16 @@ class Takuzu(Problem):
             for col in range(size):
                 if state.board.get_number(row, col) == 2:
                     state.board.set_number(row, col, 0)
-                    if state.board.there_are_no_more_than_two_adjacent_numbers() and \
-                        state.board.all_rows_and_columns_are_different():
+                    if state.board.there_are_no_more_than_two_adjacent_numbers():
                         res.append((row, col, 0))
                         state.board.set_number(row, col, 2)
 
                     state.board.set_number(row, col, 1)
-                    if state.board.there_are_no_more_than_two_adjacent_numbers() and \
-                        state.board.all_rows_and_columns_are_different():
+                    if state.board.there_are_no_more_than_two_adjacent_numbers():
                         res.append((row, col, 1))
                         state.board.set_number(row, col, 2)
+        print(res)
+        print(state.board)
         return res
 
 
@@ -202,7 +202,9 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        return state.board.game_over()
+        return state.board.game_over() and \
+               state.board.all_rows_and_columns_are_different() and \
+               state.board.there_are_no_more_than_two_adjacent_numbers()
 
 
     def h(self, node: Node):
