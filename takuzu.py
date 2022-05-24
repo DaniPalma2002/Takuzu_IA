@@ -91,7 +91,7 @@ class Board:
         return 2 not in self.board
 
     def all_rows_and_columns_are_different(self):
-        return not(numpy.unique(self.board, axis=0) == numpy.unique(self.board, axis=1) == self.board)
+        return numpy.unique(self.board, axis=0).all() == numpy.unique(self.board, axis=1).all() == self.board.all()
 
     def there_are_no_more_than_two_adjacent_numbers(self):
         size = self.size()
@@ -168,7 +168,24 @@ class Takuzu(Problem):
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        return []
+        size = state.board.size()
+        res = []
+        for row in range(size):
+            for col in range(size):
+                if state.board.get_number(row, col) == 2:
+                    state.board.set_number(row, col, 0)
+                    if state.board.there_are_no_more_than_two_adjacent_numbers() and \
+                        state.board.all_rows_and_columns_are_different():
+                        res.append((row, col, 0))
+                        state.board.set_number(row, col, 2)
+
+                    state.board.set_number(row, col, 1)
+                    if state.board.there_are_no_more_than_two_adjacent_numbers() and \
+                        state.board.all_rows_and_columns_are_different():
+                        res.append((row, col, 1))
+                        state.board.set_number(row, col, 2)
+        return res
+
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -185,7 +202,6 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        print(state.board)
         return state.board.game_over()
 
 
