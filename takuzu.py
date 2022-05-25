@@ -86,6 +86,19 @@ class Board:
                     return False
         return True
 
+    def there_are_no_more_than_two_adjacent_numbers_2(self):
+        for row in range(self.size):
+            for col in range(self.size):
+                number = self.get_number(row, col)
+                if (self.adjacent_vertical_numbers(row, col).count(number) == 2 or
+                        self.adjacent_horizontal_numbers(row, col).count(number) == 2) and number != 2:
+                    return False
+        return True
+
+    def solvable(self):
+        return self.there_are_no_more_than_two_adjacent_numbers_2() and \
+               self.all_rows_are_different_2() and \
+               self.all_columns_are_different_2()
 
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
@@ -95,9 +108,25 @@ class Board:
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
-                    res.append((row, col, 0))
-                    res.append((row, col, 1))
+                    self.make_move(row, col, 0)
+                    if self.solvable():
+                        res.append((row, col, 0))
+
+                    self.make_move(row, col, 1)
+                    if self.solvable():
+                        res.append((row, col, 1))
+                    self.make_move(row, col, 2)
         return res
+
+    def all_rows_are_different_2(self):
+        for row1 in range(self.size):
+            for row2 in range(row1+1, self.size):
+                for col in range(self.size):
+                    if self.get_number(row1, col) != self.get_number(row2, col) or self.get_number(row1, col) == 2 :
+                        break
+                    if col == self.size-1:
+                        return False
+        return True
 
     def all_positions_are_filled(self):
         for i in range(self.size):
@@ -113,6 +142,16 @@ class Board:
                     if self.get_number(row1, col) != self.get_number(row2, col):
                         break
                     if col == self.size-1:
+                        return False
+        return True
+
+    def all_columns_are_different_2(self):
+        for col1 in range(self.size):
+            for col2 in range(col1+1, self.size):
+                for row in range(self.size):
+                    if self.get_number(row, col1) != self.get_number(row, col2) or self.get_number(row, col1) == 2:
+                        break
+                    if row == self.size - 1:
                         return False
         return True
 
