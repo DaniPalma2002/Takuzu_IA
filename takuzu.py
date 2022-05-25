@@ -34,106 +34,127 @@ class TakuzuState:
 
 class Board:
     """Representação interna de um tabuleiro de Takuzu."""
-    def __init__(self, board):
-        self.board = numpy.matrix(board, int)
-        self.history = []
+    def __init__(self, board, size):
+        self.board = board
+        self.size = size
 
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
-        return self.board.item(row, col)
+        return self.board[row][col]
 
-    def make_history(self):
-        for action in self.history:
-            self.set_number(action[0], action[1], action[2])
-
-    def set_number(self, row: int, col: int, n: int):
+    def make_move(self, row: int, col: int, n: int):
         """Altera uma posicao do tabuleiro sem adiciona-la ao historico"""
-        self.board.itemset((row, col), n)
+        self.board[row][col] = n
 
-    def set_number_recorded(self, row: int, col: int, n: int):
-        """Altera uma posicao do tabuleiro adicionando-a ao historico"""
-        self.board.itemset((row, col), n)
-        self.history.append((row, col, n))
 
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-        a = None
-        b = None
-        try:
-            a = self.board.item(row + 1, col)
-        except:
-            pass
-        try:
-            b = self.board.item(row - 1, col)
-        except:
-            pass
 
-        return a, b
+        if row == 0:
+            up = None
+        else:
+            up = self.get_number(row - 1, col)
+        if row == self.size-1:
+            down = None
+        else:
+            down = self.get_number(row + 1, col)
+
+        return down, up
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-        a = None
-        b = None
-        try:
-            a = self.board.item(row, col - 1)
-        except:
-            pass
-        try:
-            b = self.board.item(row, col + 1)
-        except:
-            pass
 
-        return a, b
+        if col == 0:
+            left = None
+        else:
+            left = self.get_number(row, col - 1)
+        if col == self.size-1:
+            right = None
+        else:
+            right = self.get_number(row, col+1)
 
-    def size(self):
-        """returns the size of the board nxn (returning n)"""
-        return int(self.board.size ** 0.5)
-
-    def game_over(self):
-        return 2 not in self.board
-
-    def all_rows_and_columns_are_different(self):
-        return numpy.unique(self.board, axis=0).all() != numpy.unique(self.board, axis=1).all() != self.board.all()
+        return left, right
 
     def there_are_no_more_than_two_adjacent_numbers(self):
-        size = self.size()
-        for row in range(size):
-            for col in range(size):
+        for row in range(self.size):
+            for col in range(self.size):
                 number = self.get_number(row, col)
-                if number != 2 and \
-                        (self.adjacent_vertical_numbers(row, col).count(number) == 2 or
-                         self.adjacent_horizontal_numbers(row, col).count(number) == 2):
+                if self.adjacent_vertical_numbers(row, col).count(number) == 2 or \
+                        self.adjacent_horizontal_numbers(row, col).count(number) == 2:
                     return False
         return True
 
 
-    def possible_move(self, row: int, col: int, n: int):
-        """Returns True if it is a possible move and False otherwise"""
-
-        saved_number = self.get_number(row, col)
-        self.board.set_number(row, col, n)
-        res = self.solvable()
-        self.board.set_number(row, col, saved_number)
-
-        return res
-
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
-        n = self.size()
+        #TODO
+        #mal feito
         res = []
-        for row in range(n):
-            for col in range(n):
-                if self.empty_square(row, col):
-                    if self.possible_move(row, col, 0):
-                        res.append((row, col, 0))
-                    if self.possible_move(row, col, 1):
-                        res.append((row, col, 1))
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    res.append((row, col, 0))
+                    res.append((row, col, 1))
         return res
 
+    def all_positions_are_filled(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.board[i][j] == 2:
+                    return False
+        return True
 
+    def all_rows_are_different(self):
+        for row1 in range(self.size):
+            for row2 in range(row1+1, self.size):
+                for col in range(self.size):
+                    if self.get_number(row1, col) != self.get_number(row2, col):
+                        break
+                    if col == self.size-1:
+                        return False
+        return True
 
+    def all_columns_are_different(self):
+        for col1 in range(self.size):
+            for col2 in range(col1+1, self.size):
+                for row in range(self.size):
+                    if self.get_number(row, col1) != self.get_number(row, col2):
+                        break
+                    if row == self.size - 1:
+                        return False
+        return True
+
+    def difference_between_number_of_1s_and_0s_per_row_and_column_is_fine(self):
+        if self.size % 2 == 0:
+            for row in range(self.size):
+                if self.board.count(1) != self.board.count(0):
+                    return False
+            for col in range(self.size):
+                counter = {0: 0, 1: 0}
+                for row in range(self.size):
+                    counter[self.get_number(row, col)] += 1
+                if counter[0] != counter[1]:
+                    return False
+        else:
+            for row in range(self.size):
+                if abs(self.board.count(1) - self.board.count(0)) > 1:
+                    return False
+            for col in range(self.size):
+                counter = {0: 0, 1: 0}
+                for row in range(self.size):
+                    counter[self.get_number(row, col)] += 1
+                if abs(counter[0] - counter[1]) > 1:
+                    return False
+
+        return True
+
+    def copy(self):
+        b = []
+        for i in range(self.size):
+            b.append(self.board[i].copy())
+        return Board(b, self.size)
 
     @staticmethod
     def parse_instance_from_stdin():
@@ -147,38 +168,34 @@ class Board:
             > stdin.readline()
         """
         rows = int(sys.stdin.readline())
-        matrix = ''
-        for i in range(rows - 1):
-            matrix += sys.stdin.readline().strip() + ';'
-        matrix += sys.stdin.readline().strip()
+        matrix = []
+        for i in range(rows):
+            row = sys.stdin.readline().strip().split('\t')
+            for j in range(rows):
+                row[j] = int(row[j])
+            matrix.append(row)
 
-        return Board(matrix)
+        return Board(matrix, rows)
 
-    # TODO: outros metodos da classe
-
-    def __copy__(self):
-        new_board = Board('')
-        new_board.board = self.board
-        new_board.history = self.history
-        return new_board
 
     def __repr__(self):
-        b = self.board.copy()
-        self.make_history()
-        bo = self.board.copy()
-        self.board = b
-        return str(bo).replace('\n ', '\n').replace('[', '').replace(']', '').replace(' ', '\t')
+        res = ''
+        for i in range(self.size):
+            for j in range(self.size):
+                res += str(self.board[i][j])+'\t'
+            res += '\n'
+        return res[:len(res)-1]
 
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        super().__init__(board)
+        super().__init__(TakuzuState(board))
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        state.board.possible_moves()
+        return state.board.possible_moves()
 
     def result(self, state: TakuzuState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -186,7 +203,7 @@ class Takuzu(Problem):
         das presentes na lista obtida pela execução de
         self.actions(state)."""
         new_state = TakuzuState(state.board.copy())
-        new_state.make_move(action[0], action[1], action[2])
+        new_state.board.make_move(action[0], action[1], action[2])
         return new_state
 
     def goal_test(self, state: TakuzuState):
@@ -194,10 +211,10 @@ class Takuzu(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
         return state.board.all_positions_are_filled() and \
+                state.board.there_are_no_more_than_two_adjacent_numbers() and \
                 state.board.all_rows_are_different() and \
                 state.board.all_columns_are_different() and \
-                state.board.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine() and \
-                state.board.there_are_no_more_than_two_adjacent_numbers()
+                state.board.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine()
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
@@ -208,6 +225,7 @@ class Takuzu(Problem):
 
 
 if __name__ == "__main__":
+    # Ler tabuleiro do ficheiro 'i1.txt' (Figura 1):
     # $ python3 takuzu < i1.txt
     board = Board.parse_instance_from_stdin()
     # Criar uma instância de Takuzu:
@@ -217,6 +235,6 @@ if __name__ == "__main__":
     # Verificar se foi atingida a solução
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
-    
+
 
 
