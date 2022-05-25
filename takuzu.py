@@ -3,10 +3,10 @@
 # Além das funções e classes já definidas, podem acrescentar outras que considerem pertinentes.
 
 # Grupo 01:
-# 00000 Nome1
-# 00000 Nome2
+# 00000 Daniel Pereira
+# 00000 Joao Santos
 
-import sys, numpy
+import sys
 from search import (
     Problem,
     Node,
@@ -62,6 +62,17 @@ class Board:
 
         return down, up
 
+    def number_of_free_spaces_in_the_same_row_and_column(self, row: int, col: int) -> int:
+        res = self.number_of_empty_squares() * 10 + self.number_of
+
+        for j in range(self.size):
+            if self.get_number(row, j) == 2:
+                res += 1
+        for i in range(self.size):
+            if self.get_number(i, col) == 2:
+                res += 1
+
+        return res
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
@@ -98,7 +109,8 @@ class Board:
     def solvable(self):
         return self.there_are_no_more_than_two_adjacent_numbers_2() and \
                self.all_rows_are_different_2() and \
-               self.all_columns_are_different_2()
+               self.all_columns_are_different_2() and \
+               self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2()
 
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
@@ -164,7 +176,29 @@ class Board:
                     if row == self.size - 1:
                         return False
         return True
+    def difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2(self):
+        if self.size % 2 == 0:
+            for row in range(self.size):
+                if self.board.count(1) != self.board.count(0):
+                    return False
+            for col in range(self.size):
+                counter = {0: 0, 1: 0, 2: 0}
+                for row in range(self.size):
+                    counter[self.get_number(row, col)] += 1
+                if abs(counter[0] - counter[1]) > counter[2]:
+                    return False
+        else:
+            for row in range(self.size):
+                if abs(self.board.count(1) - self.board.count(0)) > 1:
+                    return False
+            for col in range(self.size):
+                counter = {0: 0, 1: 0, 2: 0}
+                for row in range(self.size):
+                    counter[self.get_number(row, col)] += 1
+                if abs(counter[0] - counter[1]) > counter[2]+1:
+                    return False
 
+        return True
     def difference_between_number_of_1s_and_0s_per_row_and_column_is_fine(self):
         if self.size % 2 == 0:
             for row in range(self.size):
@@ -188,6 +222,31 @@ class Board:
                     return False
 
         return True
+
+    def number_of_empty_squares(self):
+        res = 0
+        for row in range(self.size):
+            for col in range(self.size):
+                if (self.get_number(row, col) == 2):
+                    res += 1
+        return res
+
+    def number_of_rows_and_columns_done(self):
+        res = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.get_number(i, j) == 2:
+                    break
+                if j == self.size-1:
+                    res += 1
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.get_number(j, i) == 2:
+                    break
+                if j == self.size-1:
+                    res += 1
+        return res
+
 
     def copy(self):
         b = []
@@ -257,10 +316,9 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        # TODO
-        pass
+        return node.state.board.number_of_empty_squares() * node.state.board.size - \
+               node.state.board.number_of_rows_and_columns_done()
 
-    # TODO: outros metodos da classe
 
 
 if __name__ == "__main__":
@@ -270,7 +328,7 @@ if __name__ == "__main__":
     # Criar uma instância de Takuzu:
     problem = Takuzu(board)
     # Obter o nó solução usando a procura em profundidade:
-    goal_node = depth_first_tree_search(problem)
+    goal_node = greedy_search(problem)
     # Verificar se foi atingida a solução
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
