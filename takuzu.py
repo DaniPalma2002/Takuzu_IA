@@ -51,14 +51,11 @@ class Board:
     def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
         respectivamente."""
-
-        if row == 0:
-            up = None
-        else:
+        up = None
+        if row != 0:
             up = self.get_number(row - 1, col)
-        if row == self.size-1:
-            down = None
-        else:
+        down = None
+        if row != self.size-1:
             down = self.get_number(row + 1, col)
 
         return down, up
@@ -77,15 +74,12 @@ class Board:
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
-
-        if col == 0:
-            left = None
-        else:
+        left = None
+        if col != 0:
             left = self.get_number(row, col - 1)
-        if col == self.size-1:
-            right = None
-        else:
-            right = self.get_number(row, col+1)
+        right = None
+        if col != self.size-1:
+           right = self.get_number(row, col+1)
 
         return left, right
 
@@ -102,17 +96,17 @@ class Board:
         for row in range(self.size):
             for col in range(self.size):
                 number = self.get_number(row, col)
-                if (self.adjacent_vertical_numbers(row, col).count(number) == 2 or
-                    self.adjacent_horizontal_numbers(row, col).count(number) == 2) and \
-                        number != 2:
+                l0 = self.adjacent_vertical_numbers(row, col)
+                l1 = self.adjacent_horizontal_numbers(row, col)
+                if number != 2 and ((l0[0] == l0[1] == number) or (l1[0] == l1[1] == number)):
                     return False
         return True
 
     def solvable(self):
         return self.there_are_no_more_than_two_adjacent_numbers_2() and \
+               self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2() and \
                self.all_rows_are_different_2() and \
-               self.all_columns_are_different_2() and \
-               self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2()
+               self.all_columns_are_different_2()
 
     def two_adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -462,7 +456,7 @@ if __name__ == "__main__":
     # Criar uma instância de Takuzu:
     problem = Takuzu(board)
     # Obter o nó solução usando a procura em profundidade:
-    goal_node = depth_first_tree_search(problem)
+    goal_node = recursive_best_first_search(problem)
     # Verificar se foi atingida a solução
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
