@@ -117,10 +117,11 @@ class Board:
                     return False
         return True
 
-    def solvable(self):
-        return self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2() and \
-               self.all_rows_are_different_2() and \
-               self.all_columns_are_different_2()
+    def solvable(self, row, col):
+        return self.there_are_no_more_than_2_adjacent_near_by(row, col) and \
+               self.difference_between_number_of_1s_and_0s_at_row_and_column_is_fine(row, col) and \
+               self.row_is_different_from_all(row) and \
+               self.col_is_different_from_all(col)
 
     def two_adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente abaixo e acima,
@@ -178,10 +179,10 @@ class Board:
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
                     self.make_move(row, col, 0)
-                    a = self.there_are_no_more_than_2_adjacent_near_by(row, col) and self.solvable()
+                    a = self.solvable(row, col)
 
                     self.make_move(row, col, 1)
-                    b = self.there_are_no_more_than_2_adjacent_near_by(row, col) and self.solvable()
+                    b = self.solvable(row, col)
 
 
                     self.make_move(row, col, 2)
@@ -205,6 +206,58 @@ class Board:
                         break
                     if col == self.size - 1:
                         return False
+        return True
+
+    def row_is_filled(self, row):
+        for col in range(self.size):
+            if self.get_number(row, col) == 2:
+                return False
+        return True
+
+
+    def row_is_different_from_all(self, row):
+        if not self.row_is_filled(row):
+            return True
+
+        for i in range(0, row):
+            for j in range(self.size):
+                if self.get_number(i, j) != self.get_number(row, j):
+                    break
+                if j == self.size - 1:
+                    return False
+
+        for i in range(row+1, self.size):
+            for j in range(self.size):
+                if self.get_number(i, j) != self.get_number(row, j):
+                    break
+                if j == self.size - 1:
+                    return False
+        return True
+
+    def col_is_filled(self, col):
+        for row in range(self.size):
+            if self.get_number(row, col) == 2:
+                return False
+        return True
+
+    def col_is_different_from_all(self, col):
+        if not self.col_is_filled(col):
+            return True
+
+        for j in range(0, col):
+            for i in range(self.size):
+                if self.get_number(i, j) != self.get_number(i, col):
+                    break
+                if i == self.size - 1:
+                    return False
+
+        for j in range(col+1, self.size):
+            for i in range(self.size):
+                if self.get_number(i, j) != self.get_number(i, col):
+                    break
+                if i == self.size - 1:
+                    return False
+
         return True
 
     def all_positions_are_filled(self):
@@ -276,21 +329,17 @@ class Board:
 
         return True
 
-    def difference_between_number_of_1s_and_0s_per_row_and_column_is_fine(self):
+    def difference_between_number_of_1s_and_0s_at_row_and_column_is_fine(self, row, col):
         if self.size % 2 == 0:
-            for row in range(self.size):
-                if self.difference_between_0s_and_1s_in_row(row) != 0:
-                    return False
-            for col in range(self.size):
-                if self.difference_between_0s_and_1s_in_col(col) != 0:
-                    return False
+            if self.difference_between_0s_and_1s_in_row(row) > self.number_of_empty_squares_in_row(row):
+                return False
+            if self.difference_between_0s_and_1s_in_col(col) > self.number_of_empty_squares_in_col(col):
+                return False
         else:
-            for row in range(self.size):
-                if self.difference_between_0s_and_1s_in_row(row) > 1:
-                    return False
-            for col in range(self.size):
-                if self.difference_between_0s_and_1s_in_col(col) > 1:
-                    return False
+            if self.difference_between_0s_and_1s_in_row(row) > self.number_of_empty_squares_in_row(row) + 1:
+                return False
+            if self.difference_between_0s_and_1s_in_col(col) > self.number_of_empty_squares_in_col(col) + 1:
+                return False
 
         return True
 
@@ -375,6 +424,15 @@ class Board:
                         res += 1
         return res
 
+    def side_empty_squares(self):
+        res = 0
+        for row in (0, self.size - 1):
+            for col in (0, self.size - 1):
+                if self.get_number(row, col) == 2:
+                    res += 1
+
+        return res
+
     def copy(self):
         b = []
         for row in range(self.size):
@@ -406,7 +464,10 @@ class Board:
         res = ''
         for i in range(self.size):
             for j in range(self.size):
-                res += str(self.board[i][j]) + '\t'
+                if j != self.size - 1:
+                    res += str(self.board[i][j]) + '\t'
+                else:
+                    res += str(self.board[i][j])
             res += '\n'
         return res[:len(res) - 1]
 
@@ -416,7 +477,6 @@ class Takuzu(Problem):
         """O construtor especifica o estado inicial."""
         super().__init__(TakuzuState(board))
         self.aux = 0
-
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
@@ -433,6 +493,7 @@ class Takuzu(Problem):
 
     def goal_test(self, state: TakuzuState):
         self.aux += 1
+        print(self.aux)
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
@@ -440,7 +501,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares()
+        return node.state.board.number_of_empty_squares()*node.state.board.size**2 - node.state.board.side_empty_squares()
 
 
 if __name__ == "__main__":
@@ -450,7 +511,5 @@ if __name__ == "__main__":
     # Criar uma instância de Takuzu:
     problem = Takuzu(board)
     # Obter o nó solução usando a procura em profundidade:
-    goal_node = depth_first_tree_search(problem)
-    # Verificar se foi atingida a solução
-    print("Is goal?", problem.goal_test(goal_node.state))
-    print("Solution:\n", goal_node.state.board, sep="")
+    goal_node = greedy_search(problem)
+    print(goal_node.state.board)
