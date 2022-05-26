@@ -103,7 +103,8 @@ class Board:
             for col in range(self.size):
                 number = self.get_number(row, col)
                 if (self.adjacent_vertical_numbers(row, col).count(number) == 2 or
-                        self.adjacent_horizontal_numbers(row, col).count(number) == 2) and number != 2:
+                    self.adjacent_horizontal_numbers(row, col).count(number) == 2) and \
+                        number != 2:
                     return False
         return True
 
@@ -167,45 +168,50 @@ class Board:
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
+        c = 0
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
-                    cm = self.correct_move(row, col, 0)
-
                     self.make_move(row, col, 0)
-                    if self.solvable():
-                        if cm:
-                            self.make_move(row, col, 2)
-                            print(row, col, 0)
-                            return [(row, col, 0)]
-                        res.append((row, col, 0))
 
-                    cm = self.correct_move(row, col, 1)
+                    if self.solvable():
+                        res.append((row, col, 0))
+                        c += 1
 
                     self.make_move(row, col, 1)
                     if self.solvable():
-                        if cm:
-                            self.make_move(row, col, 2)
-                            print(row, col, 1)
-                            return [(row, col, 1)]
                         res.append((row, col, 1))
+                        c += 1
+
                     self.make_move(row, col, 2)
+        #constraints
+        if c % 2 == 0:
+            for i in range(0, c, 2):
+                if res[i][0] != res[i+1][0] or res[i][1] != res[i+1][1]:
+                    return [res[i]]
+        else:
+            for i in range(0, c-1, 2):
+                if res[i][0] != res[i + 1][0] or res[i][1] != res[i + 1][1]:
+                    return [res[i]]
+            if res[c-2][0] != res[c-1][0] and res[c-2][1] != res[c-1][1]:
+                return [res[c-2]]
+
         return res
 
     def all_rows_are_different_2(self):
         for row1 in range(self.size):
             for row2 in range(row1+1, self.size):
                 for col in range(self.size):
-                    if self.get_number(row1, col) != self.get_number(row2, col) or self.get_number(row1, col) == 2 :
+                    if self.get_number(row1, col) != self.get_number(row2, col) or self.get_number(row1, col) == 2:
                         break
                     if col == self.size-1:
                         return False
         return True
 
     def all_positions_are_filled(self):
-        for i in range(self.size):
-            for j in range(self.size):
-                if self.board[i][j] == 2:
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
                     return False
         return True
 
@@ -380,18 +386,18 @@ class Board:
 
     def copy(self):
         b = []
-        for i in range(self.size):
-            b.append(self.board[i].copy())
+        for row in range(self.size):
+            b.append([])
+            for col in range(self.size):
+                b[row].append(self.get_number(row, col))
         return Board(b, self.size)
 
     @staticmethod
     def parse_instance_from_stdin():
         """Lê o test do standard input (stdin) que é passado como argumento
         e retorna uma instância da classe Board.
-
         Por exemplo:
             $ python3 takuzu.py < input_T01
-
             > from sys import stdin
             > stdin.readline()
         """
@@ -441,15 +447,11 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-        return state.board.all_positions_are_filled() and \
-                state.board.there_are_no_more_than_two_adjacent_numbers() and \
-                state.board.all_rows_are_different() and \
-                state.board.all_columns_are_different() and \
-                state.board.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine()
+        return state.board.all_positions_are_filled()
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares()*node.state.board.size**2
+        return node.state.board.number_of_empty_squares()
 
 
 
@@ -465,6 +467,3 @@ if __name__ == "__main__":
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
     print(goal_node.solution(), goal_node.state.id)
-
-
-
