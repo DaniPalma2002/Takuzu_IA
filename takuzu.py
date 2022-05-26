@@ -102,9 +102,24 @@ class Board:
                     return False
         return True
 
+    def no_more_than_2_adjacent_near_by(self, row, col):
+        start_row = max(row - 1, 0)
+        stop_row = min(row + 1, self.size-1)
+
+        start_col = max(col - 1, 0)
+        stop_col = min(col + 1, self.size-1)
+
+        for row in range(start_row, stop_row):
+            for col in range(start_col, stop_col):
+                number = self.get_number(row, col)
+                l0 = self.adjacent_vertical_numbers(row, col)
+                l1 = self.adjacent_horizontal_numbers(row, col)
+                if number != 2 and ((l0[0] == l0[1] == number) or (l1[0] == l1[1] == number)):
+                    return False
+        return True
+
     def solvable(self):
-        return self.there_are_no_more_than_two_adjacent_numbers_2() and \
-               self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2() and \
+        return self.difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2() and \
                self.all_rows_are_different_2() and \
                self.all_columns_are_different_2()
 
@@ -162,34 +177,26 @@ class Board:
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
-        c = 0
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
                     self.make_move(row, col, 0)
-
-                    if self.solvable():
-                        res.append((row, col, 0))
-                        c += 1
+                    a = self.no_more_than_2_adjacent_near_by(row, col) and self.solvable()
 
                     self.make_move(row, col, 1)
-                    if self.solvable():
+                    b = self.no_more_than_2_adjacent_near_by(row, col) and self.solvable
+
+                    if a and not b:
+                        self.make_move(row, col, 2)
+                        return [(row, col, 0)]
+                    elif b and not a:
+                        self.make_move(row, col, 2)
+                        return [(row, col, 1)]
+                    else:
+                        res.append((row, col, 0))
                         res.append((row, col, 1))
-                        c += 1
 
                     self.make_move(row, col, 2)
-        #constraints
-        if c % 2 == 0:
-            for i in range(0, c, 2):
-                if res[i][0] != res[i+1][0] or res[i][1] != res[i+1][1]:
-                    return [res[i]]
-        else:
-            for i in range(0, c-1, 2):
-                if res[i][0] != res[i + 1][0] or res[i][1] != res[i + 1][1]:
-                    return [res[i]]
-            if res[c-2][0] != res[c-1][0] and res[c-2][1] != res[c-1][1]:
-                return [res[c-2]]
-
         return res
 
     def all_rows_are_different_2(self):
@@ -456,7 +463,7 @@ if __name__ == "__main__":
     # Criar uma instância de Takuzu:
     problem = Takuzu(board)
     # Obter o nó solução usando a procura em profundidade:
-    goal_node = recursive_best_first_search(problem)
+    goal_node = depth_first_tree_search(problem)
     # Verificar se foi atingida a solução
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board, sep="")
