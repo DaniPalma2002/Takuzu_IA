@@ -59,17 +59,6 @@ class Board:
 
         return down, up
 
-    def number_of_free_spaces_in_the_same_row_and_column(self, row: int, col: int) -> int:
-        res = self.number_of_empty_squares() * 10 + self.number_of
-
-        for j in range(self.size):
-            if self.get_number(row, j) == 2:
-                res += 1
-        for i in range(self.size):
-            if self.get_number(i, col) == 2:
-                res += 1
-
-        return res
 
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
@@ -83,24 +72,6 @@ class Board:
 
         return left, right
 
-    def there_are_no_more_than_two_adjacent_numbers(self):
-        for row in range(self.size):
-            for col in range(self.size):
-                number = self.get_number(row, col)
-                if self.adjacent_vertical_numbers(row, col).count(number) == 2 or \
-                        self.adjacent_horizontal_numbers(row, col).count(number) == 2:
-                    return False
-        return True
-
-    def there_are_no_more_than_two_adjacent_numbers_2(self):
-        for row in range(self.size):
-            for col in range(self.size):
-                number = self.get_number(row, col)
-                l0 = self.adjacent_vertical_numbers(row, col)
-                l1 = self.adjacent_horizontal_numbers(row, col)
-                if number != 2 and ((l0[0] == l0[1] == number) or (l1[0] == l1[1] == number)):
-                    return False
-        return True
 
     def there_are_no_more_than_2_adjacent_near_by(self, row, col):
         start_row = max(row - 1, 0)
@@ -123,54 +94,6 @@ class Board:
                self.row_is_different_from_all(row) and \
                self.col_is_different_from_all(col)
 
-    def two_adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente abaixo e acima,
-        respectivamente."""
-
-        if row <= 1:
-            up = None
-            upup = None
-        else:
-            up = self.get_number(row - 1, col)
-            upup = self.get_number(row - 2, col)
-        if row >= self.size - 2:
-            down = None
-            downdown = None
-        else:
-            down = self.get_number(row + 1, col)
-            downdown = self.get_number(row + 2, col)
-
-        return downdown, down, up, upup
-
-    def two_adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
-        """Devolve os valores imediatamente à esquerda e à direita,
-        respectivamente."""
-
-        if col <= 1:
-            left = None
-            leftleft = None
-        else:
-            left = self.get_number(row, col - 1)
-            leftleft = self.get_number(row, col - 2)
-        if col >= self.size - 2:
-            right = None
-            rightright = None
-        else:
-            right = self.get_number(row, col + 1)
-            rightright = self.get_number(row, col + 2)
-
-        return left, leftleft, right, rightright
-
-    def correct_move(self, row: int, col: int, number: int) -> bool:
-        l3 = self.adjacent_vertical_numbers(row, col)
-        l4 = self.adjacent_horizontal_numbers(row, col)
-        l1 = self.two_adjacent_horizontal_numbers(row, col)
-        l2 = self.two_adjacent_vertical_numbers(row, col)
-        return (number != l1[0] == l1[1] != 2 and l1[0] != None) or \
-               (number != l1[2] == l1[3] != 2 and l1[2] != None) or \
-               (number != l2[0] == l2[1] != 2 and l2[0] != None) or \
-               (number != l2[1] == l2[2] != 2 and l2[2] != None) or \
-               number != l3[0] == l4[1] != 2
 
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
@@ -196,15 +119,6 @@ class Board:
                         return []
         return res
 
-    def all_rows_are_different_2(self):
-        for row1 in range(self.size):
-            for row2 in range(row1 + 1, self.size):
-                for col in range(self.size):
-                    if self.get_number(row1, col) != self.get_number(row2, col) or self.get_number(row1, col) == 2:
-                        break
-                    if col == self.size - 1:
-                        return False
-        return True
 
     def row_is_filled(self, row):
         for col in range(self.size):
@@ -275,15 +189,6 @@ class Board:
                         return False
         return True
 
-    def all_columns_are_different_2(self):
-        for col1 in range(self.size):
-            for col2 in range(col1 + 1, self.size):
-                for row in range(self.size):
-                    if self.get_number(row, col1) != self.get_number(row, col2) or self.get_number(row, col1) == 2:
-                        break
-                    if row == self.size - 1:
-                        return False
-        return True
 
     def all_columns_are_different(self):
         for col1 in range(self.size):
@@ -309,23 +214,6 @@ class Board:
                 counter += 1
         return counter
 
-    def difference_between_number_of_1s_and_0s_per_row_and_column_is_fine_2(self):
-        if self.size % 2 == 0:
-            for row in range(self.size):
-                if self.difference_between_0s_and_1s_in_row(row) > self.number_of_empty_squares_in_row(row):
-                    return False
-            for col in range(self.size):
-                if self.difference_between_0s_and_1s_in_col(col) > self.number_of_empty_squares_in_col(col):
-                    return False
-        else:
-            for row in range(self.size):
-                if self.difference_between_0s_and_1s_in_row(row) > self.number_of_empty_squares_in_row(row) + 1:
-                    return False
-            for col in range(self.size):
-                if self.difference_between_0s_and_1s_in_col(col) > self.number_of_empty_squares_in_col(col) + 1:
-                    return False
-
-        return True
 
     def difference_between_number_of_1s_and_0s_at_row_and_column_is_fine(self, row, col):
         if self.size % 2 == 0:
@@ -406,21 +294,6 @@ class Board:
                     res += 1
         return res
 
-    def is_empty_square(self, row, col):
-        return self.get_number(row, col) == 2
-
-    def number_of_empty_squares_with_adjacent_numbers(self):
-        res = 0
-        for row in range(self.size):
-            for col in range(self.size):
-                if self.is_empty_square(row, col):
-                    l = self.adjacent_vertical_numbers(row, col)
-                    if l[0] == l[1] != 2:
-                        res += 1
-                    l = self.adjacent_horizontal_numbers(row, col)
-                    if l[0] == l[1] != 2:
-                        res += 1
-        return res
 
     def side_empty_squares(self):
         res = 0
@@ -431,25 +304,6 @@ class Board:
 
         return res
 
-    def heuristic_of_non_free_spaces_together(self):
-        '''the lesser it returns the more numbers are together'''
-        res = 0
-        streak = 1
-        for row in range(self.size):
-            for col in range(self.size):
-                if self.get_number(row, col) != 2:
-                    res += streak
-                    streak += streak
-                else:
-                    streak = 1
-        for row in range(self.size):
-            for col in range(self.size):
-                if self.get_number(col, row) != 2:
-                    res += streak
-                    streak += streak
-                else:
-                    streak = 1
-        return res
 
     def copy(self):
         b = []
@@ -489,12 +343,31 @@ class Board:
             res += '\n'
         return res[:len(res) - 1]
 
+    def heuristic_of_non_free_spaces_together(self):
+        '''the lesser it returns the more numbers are together'''
+        res = 0
+        streak = 1
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    res += streak
+                    streak += streak
+                else:
+                    streak = 1
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(col, row) == 2:
+                    res += streak
+                    streak += streak
+                else:
+                    streak = 1
+        return res
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
         super().__init__(TakuzuState(board))
-        self.aux = 0
+
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
@@ -510,23 +383,22 @@ class Takuzu(Problem):
         return new_state
 
     def goal_test(self, state: TakuzuState):
-        self.aux += 1
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
+
+
+
         return state.board.all_positions_are_filled()
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares() - node.state.board.side_empty_squares()
+        return node.state.board.number_of_empty_squares()*node.state.board.size - \
+               node.state.board.heuristic_of_non_free_spaces_together()
 
 
 if __name__ == "__main__":
-    # Ler tabuleiro do ficheiro 'i1.txt' (Figura 1):
-    # $ python3 takuzu < i1.txt
     board = Board.parse_instance_from_stdin()
-    # Criar uma instância de Takuzu:
     problem = Takuzu(board)
-    # Obter o nó solução usando a procura em profundidade:
     goal_node = greedy_search(problem)
     print(goal_node.state.board)
