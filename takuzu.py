@@ -39,6 +39,8 @@ class Board:
         self.board = board
         self.size = size
 
+
+
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board[row][col]
@@ -94,7 +96,34 @@ class Board:
                self.row_is_different_from_all(row) and \
                self.col_is_different_from_all(col)
 
+    def possible_moves_h(self):
+        """Returns a list of possible moves, every possible move is like (row, col, number)"""
+        res = []
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    self.make_move(row, col, 0)
+                    a = self.solvable(row, col)
 
+                    self.make_move(row, col, 1)
+                    b = self.solvable(row, col)
+
+                    self.make_move(row, col, 2)
+                    if a and b:
+                        res.append((row, col, 0))
+                        res.append((row, col, 1))
+                    elif a and not b:
+                        return [(row, col, 0)]
+                    elif b and not a:
+                        return [(row, col, 1)]
+                    else:
+                        return []
+
+        for el in res:
+            if self.difference_between_number_of_1s_and_0s_at_row_and_column_is_on_limit(el[0], el[1]):
+                return [el]
+
+        return res
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
@@ -117,8 +146,66 @@ class Board:
                         return [(row, col, 1)]
                     else:
                         return []
-        return res
 
+        for el in res:
+            row = el[0]
+            col = el[1]
+            r1 = self.number_of_1s_in_row(row)
+            r0 = self.number_of_0s_in_row(row)
+            c1 = self.number_of_1s_in_col(col)
+            c0 = self.number_of_0s_in_col(col)
+            r2 = self.number_of_empty_squares_in_row(row)
+            c2 = self.number_of_empty_squares_in_col(col)
+
+            if r1 - r0 == r2:
+                self.make_move(row, col, r0)
+                if self.solvable(row, col):
+                    self.make_move(row, col, 0)
+                    return [(el[0], el[1], 0)]
+            elif r0 - r1 == r2:
+                self.make_move(row, col, r1)
+                if self.solvable(row, col):
+                    self.make_move(row, col, 1)
+                return [(el[0], el[1], 1)]
+            elif c1 - c0 == c2:
+                self.make_move(row, col, c0)
+                if self.solvable(row, col):
+                    self.make_move(row, col, 0)
+                    return [(el[0], el[1], 0)]
+            elif c0 - c1 == c2:
+                self.make_move(row, col, c1)
+                if self.solvable(row, col):
+                    self.make_move(row, col, 1)
+                    return [(el[0], el[1], 1)]
+
+        return res
+    def possible_moves_doing_unique(self):
+        """Returns a list of possible moves, every possible move is like (row, col, number)"""
+        res = []
+
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    self.make_move(row, col, 0)
+                    a = self.solvable(row, col)
+
+                    self.make_move(row, col, 1)
+                    b = self.solvable(row, col)
+
+                    self.make_move(row, col, 2)
+                    if a and b:
+                        res.append((row, col, 0))
+                        res.append((row, col, 1))
+                    elif a and not b:
+                        self.make_move(row, col, 0)
+                        return True
+                    elif b and not a:
+                        self.make_move(row, col, 1)
+                        return True
+                    else:
+                        return []
+
+        return res
 
     def row_is_filled(self, row):
         for col in range(self.size):
@@ -214,6 +301,19 @@ class Board:
                 counter += 1
         return counter
 
+    def difference_between_number_of_1s_and_0s_at_row_and_column_is_on_limit(self, row, col):
+        if self.size % 2 == 0:
+            if self.difference_between_0s_and_1s_in_row(row) == self.number_of_empty_squares_in_row(row):
+                return True
+            if self.difference_between_0s_and_1s_in_col(col) == self.number_of_empty_squares_in_col(col):
+                return True
+        else:
+            if self.difference_between_0s_and_1s_in_row(row) == self.number_of_empty_squares_in_row(row) + 1:
+                return True
+            if self.difference_between_0s_and_1s_in_col(col) == self.number_of_empty_squares_in_col(col) + 1:
+                return True
+
+        return False
 
     def difference_between_number_of_1s_and_0s_at_row_and_column_is_fine(self, row, col):
         if self.size % 2 == 0:
@@ -354,13 +454,19 @@ class Board:
                     streak += streak
                 else:
                     streak = 1
+        return True
+
+    def heuristic_of_the_most_forced_line(self):
+        return len(self.possible_moves())
+
+    def empty_squares_in_the_centre(self):
+        '''the greater it returns the more there are numbers in the centre'''
+        res = 0
+        center = self.size//2
         for row in range(self.size):
             for col in range(self.size):
-                if self.get_number(col, row) == 2:
-                    res += streak
-                    streak += streak
-                else:
-                    streak = 1
+                if self.get_number(row, col) != 2:
+                    res += abs(center - row) - abs(center - col)
         return res
 
 class Takuzu(Problem):
@@ -386,15 +492,11 @@ class Takuzu(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
-
-
-
         return state.board.all_positions_are_filled()
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares()*node.state.board.size - \
-               node.state.board.heuristic_of_non_free_spaces_together()
+        return node.state.board.number_of_empty_squares()*node.state.board.size + node.state.board.empty_squares_in_the_centre()
 
 
 if __name__ == "__main__":
