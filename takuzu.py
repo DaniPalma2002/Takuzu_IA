@@ -184,16 +184,14 @@ class Board:
                     self.make_move(row, col, 1)
                     b = self.solvable(row, col)
 
-
                     self.make_move(row, col, 2)
-
-                    if a and not b:
+                    if a and b:
+                        res.append((row, col, 0))
+                        res.append((row, col, 1))
+                    elif a and not b:
                         return [(row, col, 0)]
                     elif b and not a:
                         return [(row, col, 1)]
-                    elif a and b:
-                        res.append((row, col, 0))
-                        res.append((row, col, 1))
                     else:
                         return []
         return res
@@ -433,6 +431,26 @@ class Board:
 
         return res
 
+    def heuristic_of_non_free_spaces_together(self):
+        '''the lesser it returns the more numbers are together'''
+        res = 0
+        streak = 1
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) != 2:
+                    res += streak
+                    streak += streak
+                else:
+                    streak = 1
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(col, row) != 2:
+                    res += streak
+                    streak += streak
+                else:
+                    streak = 1
+        return res
+
     def copy(self):
         b = []
         for row in range(self.size):
@@ -493,7 +511,6 @@ class Takuzu(Problem):
 
     def goal_test(self, state: TakuzuState):
         self.aux += 1
-        print(self.aux)
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas com uma sequência de números adjacentes."""
@@ -501,7 +518,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares()*node.state.board.size**2 - node.state.board.side_empty_squares()
+        return node.state.board.number_of_empty_squares() - node.state.board.side_empty_squares()
 
 
 if __name__ == "__main__":
