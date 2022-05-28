@@ -39,8 +39,6 @@ class Board:
         self.board = board
         self.size = size
 
-
-
     def get_number(self, row: int, col: int) -> int:
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.board[row][col]
@@ -61,7 +59,6 @@ class Board:
 
         return down, up
 
-
     def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
         """Devolve os valores imediatamente à esquerda e à direita,
         respectivamente."""
@@ -73,7 +70,6 @@ class Board:
             right = self.get_number(row, col + 1)
 
         return left, right
-
 
     def there_are_no_more_than_2_adjacent_near_by(self, row, col):
         start_row = max(row - 1, 0)
@@ -96,6 +92,13 @@ class Board:
                self.row_is_different_from_all(row) and \
                self.col_is_different_from_all(col)
 
+    def possible_move(self, row, col, n):
+        self.make_move(row, col, n)
+        res = self.solvable(row, col)
+
+        self.make_move(row, col, 2)
+        return res
+
     def possible_moves_h(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
@@ -110,8 +113,7 @@ class Board:
 
                     self.make_move(row, col, 2)
                     if a and b:
-                        res.append((row, col, 0))
-                        res.append((row, col, 1))
+                        pass
                     elif a and not b:
                         return [(row, col, 0)]
                     elif b and not a:
@@ -119,11 +121,8 @@ class Board:
                     else:
                         return []
 
-        for el in res:
-            if self.difference_between_number_of_1s_and_0s_at_row_and_column_is_on_limit(el[0], el[1]):
-                return [el]
+        return [2, 2, 2]
 
-        return res
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
@@ -147,38 +146,8 @@ class Board:
                     else:
                         return []
 
-        for el in res:
-            row = el[0]
-            col = el[1]
-            r1 = self.number_of_1s_in_row(row)
-            r0 = self.number_of_0s_in_row(row)
-            c1 = self.number_of_1s_in_col(col)
-            c0 = self.number_of_0s_in_col(col)
-            r2 = self.number_of_empty_squares_in_row(row)
-            c2 = self.number_of_empty_squares_in_col(col)
-
-            if r1 - r0 == r2:
-                self.make_move(row, col, r0)
-                if self.solvable(row, col):
-                    self.make_move(row, col, 0)
-                    return [(el[0], el[1], 0)]
-            elif r0 - r1 == r2:
-                self.make_move(row, col, r1)
-                if self.solvable(row, col):
-                    self.make_move(row, col, 1)
-                return [(el[0], el[1], 1)]
-            elif c1 - c0 == c2:
-                self.make_move(row, col, c0)
-                if self.solvable(row, col):
-                    self.make_move(row, col, 0)
-                    return [(el[0], el[1], 0)]
-            elif c0 - c1 == c2:
-                self.make_move(row, col, c1)
-                if self.solvable(row, col):
-                    self.make_move(row, col, 1)
-                    return [(el[0], el[1], 1)]
-
         return res
+
     def possible_moves_doing_unique(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         res = []
@@ -198,10 +167,10 @@ class Board:
                         res.append((row, col, 1))
                     elif a and not b:
                         self.make_move(row, col, 0)
-                        return True
+                        return 0
                     elif b and not a:
                         self.make_move(row, col, 1)
-                        return True
+                        return 0
                     else:
                         return []
 
@@ -212,7 +181,6 @@ class Board:
             if self.get_number(row, col) == 2:
                 return False
         return True
-
 
     def row_is_different_from_all(self, row):
         if not self.row_is_filled(row):
@@ -225,7 +193,7 @@ class Board:
                 if j == self.size - 1:
                     return False
 
-        for i in range(row+1, self.size):
+        for i in range(row + 1, self.size):
             for j in range(self.size):
                 if self.get_number(i, j) != self.get_number(row, j):
                     break
@@ -250,7 +218,7 @@ class Board:
                 if i == self.size - 1:
                     return False
 
-        for j in range(col+1, self.size):
+        for j in range(col + 1, self.size):
             for i in range(self.size):
                 if self.get_number(i, j) != self.get_number(i, col):
                     break
@@ -275,7 +243,6 @@ class Board:
                     if col == self.size - 1:
                         return False
         return True
-
 
     def all_columns_are_different(self):
         for col1 in range(self.size):
@@ -394,7 +361,6 @@ class Board:
                     res += 1
         return res
 
-
     def side_empty_squares(self):
         res = 0
         for row in (0, self.size - 1):
@@ -403,7 +369,6 @@ class Board:
                     res += 1
 
         return res
-
 
     def copy(self):
         b = []
@@ -454,25 +419,140 @@ class Board:
                     streak += streak
                 else:
                     streak = 1
-        return True
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(col, row) == 2:
+                    res += streak
+                    streak += streak
+                else:
+                    streak = 1
+        return res
 
     def heuristic_of_the_most_forced_line(self):
-        return len(self.possible_moves())
+        pm = self.possible_moves()
+        if pm == []:
+            return 0
+        self.make_move(pm[0][0], pm[0][1], pm[0][2])
+
+        pm2 = self.possible_moves()
+        if pm2 == []:
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm[0][0], pm[0][1], 2)
+
+        return len(pm2) + len(pm)
+
+    def heuristic_of_the_most_forced_line_3(self):
+        pm = self.possible_moves()
+        if pm == []:
+            return 0
+        self.make_move(pm[0][0], pm[0][1], pm[0][2])
+
+        pm2 = self.possible_moves()
+        if pm2 == []:
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm2[0][0], pm2[0][1], pm2[0][2])
+
+        pm3 = self.possible_moves()
+        if pm3 == []:
+            self.make_move(pm2[0][0], pm2[0][1], 2)
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm2[0][0], pm2[0][1], 2)
+        self.make_move(pm[0][0], pm[0][1], 2)
+
+        return len(pm2) + len(pm) + len(pm3)
+
+    def heuristic_of_the_most_forced_line_4(self):
+        pm = self.possible_moves()
+        if pm == []:
+            return 0
+        self.make_move(pm[0][0], pm[0][1], pm[0][2])
+
+        pm2 = self.possible_moves()
+        if pm2 == []:
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm2[0][0], pm2[0][1], pm2[0][2])
+
+        pm3 = self.possible_moves()
+        if pm3 == []:
+            self.make_move(pm2[0][0], pm2[0][1], 2)
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm3[0][0], pm3[0][1], pm3[0][2])
+
+        pm4 = self.possible_moves()
+        if pm4 == []:
+            self.make_move(pm2[0][0], pm2[0][1], 2)
+            self.make_move(pm[0][0], pm[0][1], 2)
+            self.make_move(pm3[0][0], pm3[0][1], 2)
+            return 0
+
+
+        self.make_move(pm2[0][0], pm2[0][1], 2)
+        self.make_move(pm[0][0], pm[0][1], 2)
+        self.make_move(pm3[0][0], pm3[0][1], 2)
+
+        return len(pm2) + len(pm) + len(pm3) + len(pm4)
+
+    def heuristic_of_one_forced_move(self):
+        pm = self.possible_moves()
+        if pm == []:
+            return 0
+
+        return len(pm)
 
     def empty_squares_in_the_centre(self):
         '''the greater it returns the more there are numbers in the centre'''
         res = 0
-        center = self.size//2
+        center = self.size // 2
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) != 2:
                     res += abs(center - row) - abs(center - col)
         return res
 
+    def cols_and_rows_still_to_be_done_with_score(self):
+        pts = self.size
+        pts2 = self.size
+        for row in range(self.size):
+            score = 0
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    score += 1
+                if score < pts:
+                    pts = score
+        for col in range(self.size):
+            score = 0
+            for row in range(self.size):
+                if self.get_number(row, col) == 2:
+                    score += 1
+                if score < pts:
+                    pts2 = score
+
+        return pts + pts2
+
+
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
+        state = TakuzuState(board)
+        self.csp(state)
         super().__init__(TakuzuState(board))
+
+    def csp(self, state: TakuzuState):
+        res = state.board.possible_moves()
+        while len(res) == 1:
+            state.board.make_move(res[0][0], res[0][1], res[0][2])
+            res = state.board.possible_moves()
+
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -496,7 +576,8 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.number_of_empty_squares()*node.state.board.size + node.state.board.empty_squares_in_the_centre()
+
+        return node.state.board.number_of_empty_squares() + node.state.board.heuristic_of_the_most_forced_line()
 
 
 if __name__ == "__main__":
