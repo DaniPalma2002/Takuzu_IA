@@ -543,16 +543,7 @@ class Board:
 class Takuzu(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        state = TakuzuState(board)
-        self.csp(state)
         super().__init__(TakuzuState(board))
-
-    def csp(self, state: TakuzuState):
-        res = state.board.possible_moves()
-        while len(res) == 1:
-            state.board.make_move(res[0][0], res[0][1], res[0][2])
-            res = state.board.possible_moves()
-
 
     def actions(self, state: TakuzuState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -576,8 +567,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-
-        return node.state.board.number_of_empty_squares() + node.state.board.heuristic_of_the_most_forced_line()
+        return node.state.board.heuristic_of_non_free_spaces_together()*10 + node.state.board.empty_squares_in_the_centre()
 
 
 if __name__ == "__main__":
