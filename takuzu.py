@@ -96,7 +96,6 @@ class Board:
     def possible_move(self, row, col, n):
         self.make_move(row, col, n)
         res = self.solvable(row, col)
-
         self.make_move(row, col, 2)
         return res
 
@@ -124,30 +123,73 @@ class Board:
 
         return [2, 2, 2]
 
+    def diagonal_numbers(self, row, col):
+        return (self.get_number(row-1, col-1), self.get_number(row-1, col+1), self.get_number(row-1, col+1), self.get_number(row+1, col-1))
+
+    def __not_on_boarder__number_of_empty_squares_near_by(self, row, col):
+        return (self.adjacent_horizontal_numbers(row, col) + self.adjacent_vertical_numbers(row, col) + self.diagonal_numbers(row, col)).count(2)
+
+    def empty_squares_of_row(self, row):
+        counter = 0
+        for col in range(self.size):
+            if self.get_number(row, col) == 2:
+                counter += 1
+        return counter
+
+    def empty_squares_of_col(self, col):
+        counter = 0
+        for row in range(self.size):
+            if self.get_number(row, col) == 2:
+                counter += 1
+        return counter
+
+    def row_with_less_empty_squares(self):
+        min_empty_squares = self.size+1
+        res = -1
+        for row in range(self.size):
+            mes = self.empty_squares_of_row(row)
+            if mes < min_empty_squares and mes > 0:
+                min_empty_squares = mes
+                res = row
+        return res
+
+    def col_with_less_empty_squares(self):
+        min_empty_squares = self.size + 1
+        res = -1
+        for col in range(self.size):
+            mes = self.empty_squares_of_col(col)
+            if mes < min_empty_squares:
+                min_empty_squares = mes
+                res = col
+        return res
+
+
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
         pm = []
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
-                    self.make_move(row, col, 0)
-                    a = self.solvable(row, col)
-
-                    self.make_move(row, col, 1)
-                    b = self.solvable(row, col)
-
-                    self.make_move(row, col, 2)
-                    if a and b:
-                        adjacents = self.adjacent_horizontal_numbers(row, col) + self.adjacent_horizontal_numbers(row, col)
-                        if adjacents.count(2) != 4 and 0 < row < self.size-1 and 0 < col < self.size-1:
-                            pm.append((row, col, 0))
-                            pm.append((row, col, 1))
-                    elif a and not b:
+                    r0 = self.possible_move(row, col, 0)
+                    r1 = self.possible_move(row, col, 1)
+                    if r0 and not r1:
                         return [(row, col, 0)]
-                    elif b and not a:
+                    elif r1 and not r0:
                         return [(row, col, 1)]
-                    else:
+                    elif not (r0 or r1):
                         return []
+
+        row = self.row_with_less_empty_squares()
+        min_empty_squares = self.size
+        for col in range(self.size):
+            if self.get_number(row, col) == 2:
+                mes = self.empty_squares_of_col(col)
+                if mes < min_empty_squares and mes > 0 and self.possible_move(row, col, 0):
+                    # not necessary to test the other because of the upper loop
+                    pm = []
+                    min_empty_squares = mes
+                    pm.append((row, col, 0))
+                    pm.append((row, col, 1))
 
         return pm
 
@@ -489,12 +531,15 @@ class Board:
                         return self.heuristic_of_the_most_forced_line(moves)
                     else:
                         return self.board.size
-        return self.board.size
+        return
 
     def heuristic_of_one_forced_move(self):
         pm = self.possible_moves()
         if pm == []:
             return 0
+
+        self.board.make_move(pm[0], pm[1], pm[2])
+        self.board.make_move(pm[1], pm[2])
 
         return len(pm)
 
@@ -528,6 +573,41 @@ class Board:
 
         return pts + pts2
 
+    def heuristic_of_the_most_forced_line_4(self):
+        pm = self.possible_moves()
+        if pm == []:
+            return 0
+        self.make_move(pm[0][0], pm[0][1], pm[0][2])
+
+        pm2 = self.possible_moves()
+        if pm2 == []:
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm2[0][0], pm2[0][1], pm2[0][2])
+
+        pm3 = self.possible_moves()
+        if pm3 == []:
+            self.make_move(pm2[0][0], pm2[0][1], 2)
+            self.make_move(pm[0][0], pm[0][1], 2)
+            return 0
+
+        self.make_move(pm3[0][0], pm3[0][1], pm3[0][2])
+
+        pm4 = self.possible_moves()
+        if pm4 == []:
+            self.make_move(pm2[0][0], pm2[0][1], 2)
+            self.make_move(pm[0][0], pm[0][1], 2)
+            self.make_move(pm3[0][0], pm3[0][1], 2)
+            return 0
+
+
+        self.make_move(pm2[0][0], pm2[0][1], 2)
+        self.make_move(pm[0][0], pm[0][1], 2)
+        self.make_move(pm3[0][0], pm3[0][1], 2)
+
+        return len(pm2) + len(pm) + len(pm3) + len(pm4)
+
 
 class Takuzu(Problem):
     def __init__(self, board: Board):
@@ -556,7 +636,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.heuristic_of_the_most_forced_line_4()
+        return node.state.board.heuristic_of_non_free_spaces_together()*10 + node.state.board.empty_squares_in_the_centre()
 
 
 if __name__ == "__main__":
@@ -564,4 +644,3 @@ if __name__ == "__main__":
     problem = Takuzu(board)
     goal_node = depth_first_tree_search(problem)
     print(goal_node.state.board)
-    print(goal_node.state.id)
