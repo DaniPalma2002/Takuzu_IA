@@ -84,6 +84,7 @@ class Board:
                 ahn = self.adjacent_horizontal_numbers(i, j)
                 if (avn[0] == avn[1] == number != 2) or (ahn[0] == ahn[1] == number != 2):
                     return False
+
         return True
 
     def solvable(self, row, col):
@@ -125,7 +126,7 @@ class Board:
 
     def possible_moves(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
-        res = []
+        pm = []
         for row in range(self.size):
             for col in range(self.size):
                 if self.get_number(row, col) == 2:
@@ -137,8 +138,10 @@ class Board:
 
                     self.make_move(row, col, 2)
                     if a and b:
-                        res.append((row, col, 0))
-                        res.append((row, col, 1))
+                        adjacents = self.adjacent_horizontal_numbers(row, col) + self.adjacent_horizontal_numbers(row, col)
+                        if adjacents.count(2) != 4 and 0 < row < self.size-1 and 0 < col < self.size-1:
+                            pm.append((row, col, 0))
+                            pm.append((row, col, 1))
                     elif a and not b:
                         return [(row, col, 0)]
                     elif b and not a:
@@ -146,7 +149,10 @@ class Board:
                     else:
                         return []
 
-        return res
+        return pm
+
+
+
 
     def possible_moves_doing_unique(self):
         """Returns a list of possible moves, every possible move is like (row, col, number)"""
@@ -428,20 +434,6 @@ class Board:
                     streak = 1
         return res
 
-    def heuristic_of_the_most_forced_line(self):
-        pm = self.possible_moves()
-        if pm == []:
-            return 0
-        self.make_move(pm[0][0], pm[0][1], pm[0][2])
-
-        pm2 = self.possible_moves()
-        if pm2 == []:
-            self.make_move(pm[0][0], pm[0][1], 2)
-            return 0
-
-        self.make_move(pm[0][0], pm[0][1], 2)
-
-        return len(pm2) + len(pm)
 
     def heuristic_of_the_most_forced_line_3(self):
         pm = self.possible_moves()
@@ -467,40 +459,37 @@ class Board:
 
         return len(pm2) + len(pm) + len(pm3)
 
-    def heuristic_of_the_most_forced_line_4(self):
+
+
+    def heuristic_of_the_most_forced_line(self, moves=None):
+        if moves is None:
+            moves = []
         pm = self.possible_moves()
         if pm == []:
             return 0
         self.make_move(pm[0][0], pm[0][1], pm[0][2])
 
-        pm2 = self.possible_moves()
-        if pm2 == []:
-            self.make_move(pm[0][0], pm[0][1], 2)
-            return 0
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.get_number(row, col) == 2:
+                    self.make_move(row, col, 0)
+                    r0 = self.solvable(row, col)
 
-        self.make_move(pm2[0][0], pm2[0][1], pm2[0][2])
+                    self.make_move(row, col, 1)
+                    r1 = self.solvable(row, col)
 
-        pm3 = self.possible_moves()
-        if pm3 == []:
-            self.make_move(pm2[0][0], pm2[0][1], 2)
-            self.make_move(pm[0][0], pm[0][1], 2)
-            return 0
-
-        self.make_move(pm3[0][0], pm3[0][1], pm3[0][2])
-
-        pm4 = self.possible_moves()
-        if pm4 == []:
-            self.make_move(pm2[0][0], pm2[0][1], 2)
-            self.make_move(pm[0][0], pm[0][1], 2)
-            self.make_move(pm3[0][0], pm3[0][1], 2)
-            return 0
-
-
-        self.make_move(pm2[0][0], pm2[0][1], 2)
-        self.make_move(pm[0][0], pm[0][1], 2)
-        self.make_move(pm3[0][0], pm3[0][1], 2)
-
-        return len(pm2) + len(pm) + len(pm3) + len(pm4)
+                    self.make_move(row, col, 2)
+                    if r0 and not r1:
+                        self.make_move(row, col, 0)
+                        moves.append((row, col, 0))
+                        return self.heuristic_of_the_most_forced_line(moves)
+                    elif r1 and not r0:
+                        self.make_move(row, col, 1)
+                        moves.append((row, col, 1))
+                        return self.heuristic_of_the_most_forced_line(moves)
+                    else:
+                        return self.board.size
+        return self.board.size
 
     def heuristic_of_one_forced_move(self):
         pm = self.possible_moves()
@@ -567,11 +556,12 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.heuristic_of_non_free_spaces_together()*1000 + node.state.board.cols_and_rows_still_to_be_done_with_score()
+        return node.state.board.heuristic_of_the_most_forced_line_4()
 
 
 if __name__ == "__main__":
     board = Board.parse_instance_from_stdin()
     problem = Takuzu(board)
-    goal_node = greedy_search(problem)
+    goal_node = depth_first_tree_search(problem)
     print(goal_node.state.board)
+    print(goal_node.state.id)
