@@ -567,7 +567,7 @@ class Takuzu(Problem):
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
-        return node.state.board.heuristic_of_non_free_spaces_together()*10 + node.state.board.empty_squares_in_the_centre()
+        return node.state.board.heuristic_of_non_free_spaces_together()*1000 + node.state.board.cols_and_rows_still_to_be_done_with_score()
 
 
 if __name__ == "__main__":
